@@ -10,9 +10,12 @@ The collision is a little hokey, you can embed into corners, but it has saved me
 
 It is a single screen action puzzle game, with 32 levels, it is "old skool hard", has a score system, HUD and a large variety of entites and bosses.
 
-Currently I only have the 8bit version ; this is where almost all of the code only uses AXY in 8bits mode, with very minimal conversion to 16bit mode. This is for those that are just starting out and find the 16 vs 8 switching harder to follow. A 16bit version is coming soon as I will start to convert to code.
+There is the 8bit version which is mostly 8bit code only, a couple of SNES custom points are in 16bit mode as well. This is if you have trouble following switching from 8 to 16 and vise versa confusing this version may be easier to follow. 
+The 16bit version, I have upgraded the code to 16bit mode where applicable.
 
 It is worth noting that this is not the most perfect complex ideal code, some things in here a hokey, or done in a long winded way as simple repeated code compresses better. The C64 version was right up against the 16K limit ( as it also had to include the sound and graphics ) and truth be told this 1.3 version actually went over the 16K but it was post compo.
+
+The game is designed for a PAL console, it works perfectly fine on an NTSC console just it will be faster as all the delays and movement rates are designed for 50hz.
 
 Documents on how the engine logically works are coming after the 16bit version is complete.
 

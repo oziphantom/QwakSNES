@@ -1,0 +1,80 @@
+
+mINIDISP  .word ?
+mOBSEL    .word ?
+mBGMODE   .word ?
+mMOSIAC   .word ?
+mBG1SC    .word ?
+mBG2SC    .word ?
+mBG3SC    .word ?
+mBG4SC    .word ?
+mBG12NBA  .word ?
+mBG23NBA  .word ?
+mBG1HOFS  .dunion HLWord
+mBG1VOFS  .dunion HLWord
+mBG2HOFS  .dunion HLWord
+mBG2VOFS  .dunion HLWord
+mBG3HOFS  .dunion HLWord
+mBG3VOFS  .dunion HLWord
+mBG4HOFS  .dunion HLWord
+mBG4VOFS  .dunion HLWord
+mW12SEL   .word ?
+mW34SEL   .word ?
+mWOBJSEL  .word ?
+mWH0      .word ?
+mWH1      .word ?
+mWH2      .word ?
+mWH3      .word ?
+mWBGLOG   .word ?
+mOBJLOG   .word ?
+mTM       .word ?
+mTS       .word ?
+mTMW      .word ?
+mTSW      .word ?
+mCOLDATA  .word ?
+mSETINI   .word ?
+mNMITIMEN .word ?
+
+joyLeft	 		.byte ?
+joyRight 		.byte ?
+joyUp	 			.byte ?
+joyDown	 		.byte ?
+joyFire	 		.byte ?
+oldJoyLeft		.byte ?
+oldJoyRight 	.byte ?
+oldJoyUp			.byte ?
+oldJoyDown		.byte ?
+oldJoyFire		.byte ?
+joyUpStart  	.byte ?
+joyUpStop		.byte ?
+joyFireEvent 	.byte ?
+GameData 		.dstruct sGameData
+LevelData 		.dstruct sLevelData
+PlayerData 		.dstruct sPlayerData
+TICK_DOWN_START = *
+TickDowns 		.dstruct sTimerTickDowns
+TICK_DOWN_END = *
+EntityData 		.dstruct sEntityData
+PasswordTemp .block 
+	lives			.byte ?
+	flowers		.byte ?
+	score			.byte ?,?,?,?,?,?
+	high			.byte ?,?,?,?,?,?
+	currLevel	.byte ?
+.bend ;PasswordTemp 
+ActivePassword 						.fill 12
+PasswordEntryIndex 					.byte ?
+ValidPassword 							.byte ?
+PasswordInfiLives 					.byte ?
+PasswordRedBullets 					.byte ?
+PasswordHaveSpring 					.byte ?
+PasswordLevelSkip 					.byte ?
+checkSpriteToCharData 				.dstruct sCSTCCParams
+bulletFrame 							.byte ?
+disableUpdateSpritesXYToOAMNF 	.byte ?
+
+tileMapTemp .fill 240
+mplexBuffer     .dstruct sMplexBuffer
+PasswordRAMCache .fill 12
+
+OAMMirror .fill 256*2
+OAMMirrorHigh .fill 32
