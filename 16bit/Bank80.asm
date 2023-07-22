@@ -236,7 +236,17 @@ InitSNESAndMirror	; this is defualt init sequence
 	bpl -
 	; put the Screen mirror into VRAM 
 	jsr dmaScreenMirrorToTitleScreen_xx
-
+	; init the SPC and start the title screen music
+	#AXY16
+	lda #<>spc700_code_1
+	ldx #`spc700_code_1
+	jsl SPC_Init
+	lda #1
+	jsl SPC_Stereo
+	lda #<>music_1
+	ldx #`music_1
+	jsl SPC_Play_Song
+	#A8
 	; set up mode and tile pointer
 	lda #1			; mode 1
 	sta $802105
@@ -558,8 +568,8 @@ playerDead
 	lda PlayerData.minorState
 	cmp #kPlayerState.dead					; are we entering this state for the first time?
 	bne _waitForAnimation
-		;ldx #kSFX.hurt
-		;jsr playSFX
+		lda #kSFX.hurt
+		jsr playSFX
 		lda #kPlayerAnimsIndex.dead		; we have to set up the exit animation
 		jsr setPlayerAnimeTo_88
 		;lda #kPlayerStateDeath.animate
@@ -644,8 +654,8 @@ _ASSERT_axy8
 	#A8
 	lda #TitleScreenData.SpriteStruct.kUpper
 	sta OAMMirrorHigh
-;	lda #0
-;	jsr playMusic
+	lda #kMus.TITLE
+	jsr playMusic
 	inc PlayerData.state						; move to the wait for fire FSM state
 	lda #$FF
 	sta disableUpdateSpritesXYToOAMNF	; we do not have the player or Entities and so do not want the auto update
@@ -912,8 +922,8 @@ _ASSERT_axy8
 	jsr plotStatusArea
 	lda #kPlayerState.appear			; set the player state to appear
 	sta PlayerData.state
-	;lda #1
-	;jsr playMusic
+	lda #kMus.THEME_1
+	jsr playMusic
 	rts
 
 ; ----- @Intermission loop@ -----
@@ -948,6 +958,8 @@ _ASSERT_axy8
 	stz CheckSpriteToCharData.xDeltaCheck.hi
 	sta GameData.exitOpenNZ							; we want to close the door
 	jsr setAnimateDoorToClose_88					; set the door to close
+	lda #kSFX.DOORCLOSE
+	jsr playSFX
 	lda GameData.currLevel							; inc and wrap level number
 	clc
 	adc #1
@@ -991,8 +1003,8 @@ _ASSERT_axy8
 		jsr setAnimateDoorToOpen_88				; start opening the next door
 		lda #kIntermission.secondExit
 		sta LevelData.exitIndex						; set the door we want to animate
-		;lda #kSFX.door
-		;jsr playSFX
+		lda #kSFX.DOOROPEN
+		jsr playSFX
 +	rts
 
 .as
@@ -1001,19 +1013,19 @@ interEnterDoor
 _ASSERT_axy8
 	jsr updatePlayerAnim_88							; has the animation completed?
 	bcc _exit
-;		lda GameData.currLevel						; we alternate level music
-;		ldx #size(BossLevels)-1						; so this checks if we are on a boss
-;	-	cmp BossLevels,x								; level and adjust the tune as needed
-;		beq _bossLevel
-;			dex
-;			bpl -
-;			and #1
-;			clc
-;			adc #1
-;			.byte $2c ; BIT XXXXX
-;	_bossLevel
-		;lda #3
-		;jsr playMusic
+		lda GameData.currLevel						; we alternate level music
+		ldx #size(BossLevels)-1						; so this checks if we are on a boss
+	-	cmp BossLevels,x								; level and adjust the tune as needed
+		beq _bossLevel
+			dex
+			bpl -
+			and #1
+			clc
+			adc #1
+			.byte $2c ; BIT XXXXX
+	_bossLevel
+		lda #kMus.BOSS
+		jsr playMusic
 	lda #kPlayerState.appear						; set player to appear
 	sta PlayerData.state
 	#A16
@@ -1045,8 +1057,6 @@ _ASSERT_axy8
 	; remove sprites
 	jsr deactivateAllEntities					; we remove all the entites as well so you stand alone, and they don't move
 	jsr disableAllEntSprites_88
-	;lda #4
-	;jsr playMusic
 	; check to see if this is the new high score
 	ldx #0
 -	lda GameData.score,x			; score is stored in most significant digit -> lowest significant digit
@@ -1067,8 +1077,10 @@ _clearScore
 	dex
 	bpl -
 	#A8
-	jmp dmaScreenMirror_xx		; update the actual screen. this is risky as I don't know I'm in Blank
+	jsr dmaScreenMirror_xx		; update the actual screen. this is risky as I don't know I'm in Blank
 	;rts								; explicity and I rely on the NMI being short and the DMA only being 2K
+	lda #kMus.THEME_3				; on the SNES this eats a lot of time and I need the above to happen in vblank while this is better out of vblank
+	jmp playMusic
 	;
 _higher
 	ldx #size(sGameData.score)-2	; save the current score into the high score
@@ -1334,18 +1346,18 @@ _ASSERT_axy8
 		sta ActiveTileIndex
 		sta LevelData.playerIndex				; we start at the first door
 		lda #kDoorOpen
-		jsr pltSingleTileNoLookup			; first do is open
+		jsr pltSingleTileNoLookup				; first door is open
 		lda #kIntermission.secondExit
 		sta ActiveTileIndex
 		sta LevelData.exitIndex					; and leave on the second one
 		lda #kDoorClosed
-		jsr pltSingleTileNoLookup			; second door is closed
+		jsr pltSingleTileNoLookup				; second door is closed
 		ldx #(kTileXCount/2)-1					; draw half a screens worth of the 'old' tile which was chached
 _firstLoop
 		phx											; preserve X
 			inc ActiveTileIndex					; move to the next tile
 			lda #kTiles.intermissionOldWall	; cached wall "block" num
-			jsr pltSingleTileNoLookup		; plot the value raw without doing a level -> screen tile lookup
+			jsr pltSingleTileNoLookup			; plot the value raw without doing a level -> screen tile lookup
 		plx											; restore X
 		dex
 		bpl _firstLoop								; until done
@@ -2965,8 +2977,8 @@ _ASSERT_axy8
 	sta PlayerData.yDeltaAccum.hi
 	sta checkSpriteToCharData.yDeltaCheck				; which is also how much we are moving this frame
 	jsr changePlayerAnimForCurrentDir					; update the animation
-;	ldx #kSFX.jump
-;	jmp playSFX
+	lda #kSFX.jump
+	jmp playSFX
 	rts
 	
 handleFall
@@ -3272,8 +3284,8 @@ _ASSERT_jsr
 _ASSERT_axy8
 	lda #1
 	sta PlayerData.bulletActive					; we have a bullet there is only 1
-	;ldx #kSFX.bubble
-	;jsr playSFX
+	lda #kSFX.bubble
+	jsr playSFX
 	stz PlayerData.bulletUD							; it goes up with to start
 	stz PlayerData.bulletBurstNZ					; its not dead either
 	lda PlayerData.facingRight
@@ -3330,8 +3342,8 @@ _ASSERT_axy8
 	sta TickDowns.bulletLifeTimer				; hold it for 16 frames
 	lda #1
 	sta PlayerData.bulletBurstNZ				; mark it as burst
-;	ldx #kSFX.ebubble
-;	jmp playSFX
+	lda #kSFX.bubble
+	jmp playSFX
 	rts
 
 bulletNotDead
@@ -5440,8 +5452,8 @@ _ASSERT_axy8
 	jsr clearTile					; fruit, remove it
 	lda #kScoreIndex.Fruit		; give some points
 	jsr giveScore
-	;ldx #kSFX.collect
-	;jmp playSFX
+	lda #kSFX.coins
+	jmp playSFX
 	rts
 
 .as
@@ -5452,8 +5464,8 @@ _ASSERT_axy8
 	jsr clearTile				; flower, remove it
 	lda #kScoreIndex.fruit	; give same amount of points as fruit
 	jsr giveScore
-;	ldx #kSFX.flower
-;	jsr playSFX
+	lda #kSFX.flower
+	jsr playSFX
 	inc GameData.flowers		; add 1 flower to collection
 	lda GameData.flowers
 	cmp #8						; enough for a life?
@@ -5481,14 +5493,14 @@ _ASSERT_axy8
 _done
 	lda LevelData.numKeysLeft	; do we have any keys left
 	beq _changeDoor				; no, open the door
-		;ldx #kSFX.collect
-		;jmp playSFX
+		lda #kSFX.coins
+		jmp playSFX
 		rts ; above is now jmp
 _changeDoor
 	lda #1
 	sta GameData.exitOpenNZ		; set door to open
-;	tax ; ldx #kSFX.door ;=1
-;	jmp playSFX
+	lda #kSFX.DOOROPEN
+	jmp playSFX
 	rts ; above is now jmp
 
 .as
@@ -5504,8 +5516,8 @@ _ASSERT_axy8
 springFunc
 _ASSERT_axy8
 	jsr clearTile					; remove the tile
-;	ldx #kSFX.powerup
-;	jsr playSFX
+	lda #kSFX.powerup
+	jsr playSFX
 	lda #1
 	sta PlayerData.canFloatNZ	; give float power
 	rts
@@ -5529,8 +5541,8 @@ _next
 	ldx ActiveTileIndex
 	cpx #kLevelSizeMax			; until all are scanned
 	bne _loop
-;	ldx #kSFX.powerup
-;	jmp playSFX
+	lda #kSFX.powerup
+	jmp playSFX
 	rts ; above is now jmp
 
 .as
@@ -5540,8 +5552,8 @@ _ASSERT_axy8
 	jsr clearTile									; remove the tile
 	lda #1
 	sta PlayerData.hasShieldNZ					; give the shield power
-;	ldx #kSFX.powerup
-;	jsr playSFX
+	lda #kSFX.powerup
+	jsr playSFX
 	lda #<kShieldTimer
 	sta PlayerData.shieldTimer.lo				; reset the timer
 	lda #>kShieldTimer
@@ -5586,9 +5598,9 @@ _ASSERT_jsr
 _ASSERT_axy8
 	jsr clearTile								; remove tile
 	inc PlayerData.numBulletEgg			; give 1 more bullet egg
-;	ldx #kSFX.powerup
-;	gra playSFX
-	rts ; above is now jmp
+	lda #kSFX.powerup
+	jmp playSFX
+	;rts ; above is now jmp
 
 .as
 .xs
@@ -5724,11 +5736,12 @@ SFX = (kStrings.sfx,24,22)
 None = (kStrings.none,30,22)
 Password = (kStrings.password,5,19)
 PasswordBlank = (kStrings.passwordBlank,14,20)
+MusicSNES = (kStrings.snesMusic,2,13)
 
 ; merge all the strings into one, this time I don't use := but make multiple and merge down
 G1 = (Version,Original,Ported,Code)
 G2 = (Art,Music,Special,Soci)
-G3 = (Didi,Saul1,Saul2,Optiroc)
+G3 = (Didi,Saul1,Saul2,MusicSNES,Optiroc)
 ; G4 = (Both, Music2,SFX,None,Password)	; SNES version doesn't need these string yet
 ; G5 = (PasswordBlank,)
 AllStrings = G1 .. G2 .. G3 ; .. G4 .. G5
@@ -5804,12 +5817,13 @@ kStrings .block
 	password = 14*2
 	passwordBlank = 15*2
 	optiroc = 16*2
+	snesMusic = 17*2
 .bend
 
 ;StringTableLUTLo .byte <GAMEOVER,<ORIGINAL,<CX16PORT,<PROGRAM,<ART,<MUSIC,<SPECIALTHANKS,<SOCI,<MARTINPIPER,<SAUL,<SFX,<NONE,<BOTH,<VERSION,<PASSWORD,<PASSWORDBLANK,<OPTIROC
 ;StringTableLUTHi .byte >GAMEOVER,>ORIGINAL,>CX16PORT,>PROGRAM,>ART,>MUSIC,>SPECIALTHANKS,>SOCI,>MARTINPIPER,>SAUL,>SFX,>NONE,>BOTH,>VERSION,>PASSWORD,>PASSWORDBLANK,>OPTIROC
 
-StringTableLUT .word <>(GAMEOVER,ORIGINAL,CX16PORT,PROGRAM,ART,MUSIC,SPECIALTHANKS,SOCI,MARTINPIPER,SAUL,SFX,NONE,BOTH,VERSION,PASSWORD,PASSWORDBLANK,OPTIROC)
+StringTableLUT .word <>(GAMEOVER,ORIGINAL,CX16PORT,PROGRAM,ART,MUSIC,SPECIALTHANKS,SOCI,MARTINPIPER,SAUL,SFX,NONE,BOTH,VERSION,PASSWORD,PASSWORDBLANK,OPTIROC,SNESMUSIC)
 
 .enc "qwak"
 GAMEOVER			.text "GAME OVER",$ff
@@ -5829,9 +5843,57 @@ OPTIROC			.text "OPTIROC",$ff
 VERSION			.text "SNES EDITION 1.3",$ff
 PASSWORD			.text "TYPE PASSWORD : SPACE TO CLEAR",$ff
 PASSWORDBLANK	.text "------------",$ff
+SNESMUSIC		.text "SNES MUSIC : CRISPS",$FF
 
 ; the Cheat password bytes not used in SNES yet, left for cribbing, execise to the user etc
 PASSWORD_LIVES		.byte $88,$8f,$94,$8f,$90,$81,$81,$83,$92,$8f,$93,$93 ; hotopaacross
 PASSWORD_RED		.byte $89,$93,$88,$8f,$8f,$94,$92,$85,$84,$81,$8c,$8c ; ishootredall
 PASSWORD_SPRING	.byte $8d,$81,$99,$84,$81,$99,$8d,$81,$99,$84,$81,$99 ; maydaymayday
 PASSWORD_LEVEL		.byte $93,$94,$85,$90,$90,$85,$84,$8f,$96,$85,$92,$81 ; steppedovera
+
+BossLevels 		.byte 4,4+5,4+10,4+15,4+20,4+25
+
+kSFX .block
+	DOORCLOSE	= 0
+	DOOROPEN		= 1
+	COINS			= 2
+	FLOWER		= 3
+	HURT			= 4
+	BUBBLE		= 5
+	POWERUP		= 6
+	JUMP			= 7
+.bend
+
+kMus .block
+	TITLE		= 0
+	THEME_1	= 1
+	THEME_2	= 2
+	BOSS		= 3
+	THEME_3	= 4
+.bend
+
+playSFX
+	ldx #127 ; max vol
+	ldy #7	; always channel 7
+	jsl SFX_Play_Center
+	rts
+
+playMusic	
+	php	
+		#A8	
+		stz $4200,b 		; turn off NMI and joypad	
+		asl a	
+		#AXY16	
+		and #$00ff	
+		tax	
+		lda MusTable,x	
+		ldx #`music_1		; all music in one bank	
+		jsl SPC_Play_Song
+		#A8
+		lda #$81 			; enable NMI and joypad
+		sta $4200,b
+	plp
+	rts
+
+MusTable .word <>(music_1,music_2,music_3,music_4,music_5)
+.include "../music/music.asm"

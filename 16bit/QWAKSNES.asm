@@ -185,7 +185,7 @@ Bank80 .binclude "Bank80.asm"
 .send
 
 .section sBank81
-.byte 0 ; place holder
+spc700_code_1 .binary "../music/spc700.bin"
 .send
 
 .section sBank82
@@ -195,6 +195,11 @@ Bank80 .binclude "Bank80.asm"
 	TopFixedChars		.binary "../top_fixed_chars.bin"
 	CharPallete			.binary "../chars.pal"
 	SpritePallete		.binary "../sprites_SNES.pal",0,96 ; we only want first 3 PAL entries
+	music_1				.binary "../music/music_1.bin"
+	music_2				.binary "../music/music_2.bin"
+	music_3				.binary "../music/music_3.bin"
+	music_4				.binary "../music/music_4.bin"
+	music_5				.binary "../music/music_5.bin"
 .send
 
 .section sBank83
