@@ -26,7 +26,13 @@ I also highly recommend you read the extensive manual as well while looking at t
 If you wish to improve the graphics ( a great starting task, as tghe graphics are currently C64 spec) you will need Optiroc's SuperFamiconv ( https://github.com/Optiroc/SuperFamiconv ) pre converted binaries are provided for those that wish to simple build and run.
 
 # To build
-on windows just run `build_run.bat` if you are on something else the magic line is `64tass.exe -a QWAKSNES.asm -b -X -o qwakSNES.sfc --no-caret-diag --dump-labels -l "qwakSNES.tass" -L "qwakSNES.list" --verbose-list --line-numbers` if you don't care about the listing you can just do `64tass.exe -a QWAKSNES.sfc -b -X -o qwakSNES.sfc`
+on windows just run `build_run.bat` in the folder of the version you want to build. 
+
+If you are on something else first `cd` into the either the _8bit_ or _16bit_ folder, whichever you wish to build. 
+Then run `64tass.exe -a QWAKSNES.asm -b -X -o qwakSNES.sfc --no-caret-diag --dump-labels -l "qwakSNES.tass" -L "qwakSNES.list" --verbose-list --line-numbers` 
+
+If you don't care about the listing you can just do `64tass.exe -a QWAKSNES.asm -b -X -o qwakSNES.sfc`
+
 
 # Code editing and reading notes
 I use http://www.popelganda.de/relaunch64.html and set it to 64tass mode.
